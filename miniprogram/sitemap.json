@@ -1,0 +1,9 @@
+{
+  "description": "员工签到名单页（仅员工登录后可访问）",
+  "rules": [
+    {
+      "action": "disallow",
+      "page": "pages/staff/checkin-list/index"
+    }
+  ]
+}

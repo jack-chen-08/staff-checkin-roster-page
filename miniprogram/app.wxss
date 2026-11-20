@@ -1,0 +1,27 @@
+/* 全局设计变量：与 TDesign 品牌色保持一致 */
+page {
+  --brand: #0052d9;
+  --brand-light: #e3f0ff;
+  --success: #2ba471;
+  --success-bg: #e3f9e9;
+  --warning: #e37318;
+  --warning-bg: #fff1e9;
+  --error: #d54941;
+  --grey: #8b8b8b;
+  --text: rgba(0, 0, 0, 0.9);
+  --text-2: rgba(0, 0, 0, 0.6);
+  --text-3: rgba(0, 0, 0, 0.3);
+  --line: #e7e7e7;
+  --bg: #f3f3f3;
+
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
+  font-size: 28rpx;
+  -webkit-font-smoothing: antialiased;
+}
+
+view,
+text {
+  box-sizing: border-box;
+}

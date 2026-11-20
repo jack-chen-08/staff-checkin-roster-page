@@ -1,0 +1,152 @@
+<!-- 员工签到名单页 pages/staff/checkin-list?event_id= -->
+<view class="page">
+  <t-toast id="t-toast" />
+
+  <!-- 无权限：非员工账号 -->
+  <view wx:if="{{forbidden}}" class="forbidden">
+    <view class="forbidden__icon">
+      <t-icon name="lock-on" size="96rpx" color="#8b8b8b" />
+    </view>
+    <view class="forbidden__title">暂无访问权限</view>
+    <view class="forbidden__desc">员工签到名单仅对活动工作人员开放，请使用员工账号登录后重试。</view>
+    <t-button theme="primary" variant="outline" size="medium" bind:tap="onBackHome">返回上一页</t-button>
+  </view>
+
+  <block wx:else>
+    <!-- 顶部进度卡 -->
+    <view class="hero">
+      <view class="hero__top">
+        <view class="hero__meta">
+          <view class="hero__title">{{eventTitle}}</view>
+          <view class="hero__sub">{{eventDate}} · 员工签到台</view>
+        </view>
+        <view class="live">
+          <view class="live__dot"></view>
+          <text>{{refreshing ? '刷新中' : '30 秒自动刷新'}}</text>
+        </view>
+      </view>
+
+      <view class="hero__body">
+        <view class="ring">
+          <t-progress
+            theme="circle"
+            percentage="{{stats.rate}}"
+            size="{{116}}"
+            stroke-width="{{9}}"
+            label="{{false}}"
+            status="active"
+          />
+          <view class="ring__center">
+            <view class="ring__num">{{stats.rate}}<text class="ring__pct">%</text></view>
+            <view class="ring__cap">签到率</view>
+          </view>
+        </view>
+
+        <view class="kpis">
+          <view class="kpi">
+            <view class="kpi__num">{{stats.expected}}</view>
+            <view class="kpi__label">应到</view>
+          </view>
+          <view class="kpi__split"></view>
+          <view class="kpi">
+            <view class="kpi__num kpi__num--ok">{{stats.arrived}}</view>
+            <view class="kpi__label">已到</view>
+          </view>
+          <view class="kpi__split"></view>
+          <view class="kpi">
+            <view class="kpi__num kpi__num--grey">{{stats.expected - stats.arrived}}</view>
+            <view class="kpi__label">未到</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="hero__foot">
+        <text>最近更新 {{lastUpdated || '--:--:--'}}</text>
+        <text>名单共 {{total}} 人</text>
+      </view>
+    </view>
+
+    <!-- 筛选 + 搜索 -->
+    <view class="filters">
+      <t-tabs value="{{tab}}" theme="line" space-evenly="{{true}}" bind:change="onTabChange">
+        <t-tab-panel
+          wx:for="{{tabs}}"
+          wx:key="key"
+          value="{{item.key}}"
+          label="{{item.label}}"
+        />
+      </t-tabs>
+      <view class="filters__search">
+        <t-search
+          value="{{inputValue}}"
+          placeholder="搜索姓名 / 企业 / 票号后 4 位"
+          shape="round"
+          clearable
+          bind:change="onSearchChange"
+          bind:submit="onSearchSubmit"
+          bind:clear="onSearchClear"
+        />
+      </view>
+    </view>
+
+    <view wx:if="{{errorText}}" class="banner">
+      <t-icon name="error-circle" size="32rpx" color="#d54941" />
+      <text class="banner__text">{{errorText}}</text>
+      <text class="banner__retry" bind:tap="onRetry">重试</text>
+    </view>
+
+    <!-- 名单 -->
+    <view class="list" wx:if="{{rows.length}}">
+      <view class="row" wx:for="{{rows}}" wx:key="id">
+        <view class="row__avatar {{item.checkedIn ? 'row__avatar--ok' : ''}}">{{item.avatarText}}</view>
+
+        <view class="row__main">
+          <view class="row__head">
+            <text class="row__name">{{item.name}}</text>
+            <view wx:if="{{item.checkedIn}}" class="tag tag--ok">{{item.methodText}}</view>
+            <view wx:else class="tag tag--grey">未签到</view>
+          </view>
+          <view class="row__company">{{item.company}}</view>
+          <view class="row__meta">
+            <text class="row__ticket">票号 {{item.ticketTail}}</text>
+            <text wx:if="{{item.checkedIn}}" class="row__time">{{item.timeText}} 已签到</text>
+          </view>
+        </view>
+
+        <view class="row__action" wx:if="{{!item.checkedIn}}">
+          <t-button
+            size="extra-small"
+            theme="primary"
+            variant="outline"
+            data-id="{{item.id}}"
+            catch:tap="onMakeupTap"
+          >手动补签</t-button>
+        </view>
+      </view>
+
+      <view class="list__foot">
+        <t-loading wx:if="{{loadingMore}}" theme="circular" size="36rpx" text="正在加载" />
+        <text wx:elif="{{!hasMore}}">已全部加载</text>
+        <text wx:else>上滑加载更多</text>
+      </view>
+    </view>
+
+    <view wx:if="{{loading && !rows.length}}" class="loading-block">
+      <t-loading theme="circular" size="48rpx" text="正在加载名单" />
+    </view>
+
+    <view wx:elif="{{!rows.length}}" class="empty-block">
+      <t-empty description="{{emptyText || '暂无签到数据'}}" />
+    </view>
+  </block>
+
+  <!-- 手动补签弹窗 -->
+  <makeup-dialog
+    visible="{{dialogVisible}}"
+    target="{{dialogTarget}}"
+    submitting="{{submitting}}"
+    error-text="{{dialogError}}"
+    bind:confirm="onDialogConfirm"
+    bind:cancel="onDialogCancel"
+  />
+</view>

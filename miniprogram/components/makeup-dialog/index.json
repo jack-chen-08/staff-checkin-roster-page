@@ -1,0 +1,11 @@
+{
+  "component": true,
+  "styleIsolation": "apply-shared",
+  "usingComponents": {
+    "t-dialog": "tdesign-miniprogram/dialog/dialog",
+    "t-radio": "tdesign-miniprogram/radio/radio",
+    "t-radio-group": "tdesign-miniprogram/radio-group/radio-group",
+    "t-textarea": "tdesign-miniprogram/textarea/textarea",
+    "t-icon": "tdesign-miniprogram/icon/icon"
+  }
+}

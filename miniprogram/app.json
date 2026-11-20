@@ -1,0 +1,15 @@
+{
+  "pages": [
+    "pages/staff/checkin-list/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "员工签到名单",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f3f3f3",
+    "backgroundTextStyle": "dark"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

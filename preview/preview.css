@@ -1,0 +1,39 @@
+/* 小程序预览基样式（与 miniprogram/app.wxss 的设计变量保持一致） */
+:root{
+  --brand:#0052d9; --brand-light:#e3f0ff;
+  --success:#2ba471; --success-bg:#e3f9e9;
+  --warning:#e37318; --warning-bg:#fff1e9;
+  --error:#d54941; --grey:#8b8b8b; --grey-bg:#eeeeee;
+  --text:#000000e6; --text-2:#00000099; --text-3:#0000004d;
+  --bg:#f3f3f3; --line:#e7e7e7;
+}
+*{box-sizing:border-box;-webkit-font-smoothing:antialiased}
+html,body{margin:0;padding:0}
+body{
+  width:390px;min-height:100%;
+  font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif;
+  font-size:14px;color:var(--text);background:var(--bg);
+}
+/* 模拟 iOS 状态栏 + 小程序导航栏，仅用于截图呈现 */
+.statusbar{height:44px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 22px;font-size:13px;font-weight:600;background:#fff}
+.statusbar .sig{letter-spacing:2px}
+.navbar{height:44px;display:flex;align-items:center;justify-content:center;position:relative;
+  background:#fff;font-size:16px;font-weight:600;border-bottom:1px solid var(--line)}
+.navbar .back{position:absolute;left:14px;font-size:18px;color:#000;font-weight:400}
+.navbar .capsule{position:absolute;right:10px;width:87px;height:32px;border-radius:16px;
+  border:1px solid #0000001a;display:flex;align-items:center;justify-content:space-around;font-size:13px;color:#000}
+.page{padding:0 0 24px}
+.card{background:#fff;border-radius:12px;margin:12px;padding:14px}
+.tabs{display:flex;background:#fff;height:48px;align-items:stretch}
+.tabs .tab{flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-2);position:relative;font-size:14px}
+.tabs .tab.active{color:var(--brand);font-weight:600}
+.tabs .tab.active::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  width:24px;height:3px;border-radius:2px;background:var(--brand)}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:32px;padding:0 14px;
+  border-radius:6px;font-size:13px;border:1px solid var(--brand);color:var(--brand);background:#fff}
+.btn.primary{background:var(--brand);color:#fff}
+.btn.ghost{border-color:#dcdcdc;color:var(--text)}
+.tag{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:4px;font-size:11px;line-height:1}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:90px 0 40px;color:var(--text-3);gap:14px}

@@ -1,0 +1,37 @@
+{
+  "description": "员工签到名单页小程序工程配置",
+  "packOptions": {
+    "ignore": []
+  },
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "useCompilerPlugins": ["typescript"]
+  },
+  "compileType": "miniprogram",
+  "libVersion": "3.5.5",
+  "appid": "touristappid",
+  "projectname": "staff-checkin-list",
+  "miniprogramRoot": "./",
+  "condition": {
+    "miniprogram": {
+      "list": [
+        {
+          "name": "员工签到名单（全部）",
+          "pathName": "pages/staff/checkin-list/index",
+          "query": "event_id=EVT-2026-1121",
+          "scene": null
+        },
+        {
+          "name": "员工签到名单（未签到）",
+          "pathName": "pages/staff/checkin-list/index",
+          "query": "event_id=EVT-2026-1121&tab=unchecked",
+          "scene": null
+        }
+      ]
+    }
+  }
+}
