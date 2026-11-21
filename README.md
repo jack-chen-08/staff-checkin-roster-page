@@ -48,11 +48,19 @@
 │   ├── checkin.test.ts / api.test.ts / controller.test.ts
 ├── preview/                          # 截图用静态 HTML（独立可打开，相对引用 preview.css）
 │   ├── all.html / checked.html / unchecked.html
+│   ├── interactive.html              # 可交互演示页（跑同一份 logic，手动补签全流程）
+│   ├── demo-app.js / demo-bundle.js  # 演示页渲染脚本 / build-demo.js 生成的真实逻辑包
 │   ├── preview.css / checkin.css
 ├── screenshots/                      # 三个筛选的验收截图（780×3160，@2x）
 │   ├── all.png / checked.png / unchecked.png
+├── demo/                             # AC-2 交互证据（返工补充）
+│   ├── ac2-manual-checkin.mp4 / .gif # 手动补签演示（带字幕）
+│   └── evidence/ac2/                 # 同一次会话连续帧 7 张 + session-log.json + 缩略拼图
 ├── scripts/
 │   ├── gen-preview.js                # 由 mock 数据生成 preview/*.html
+│   ├── build-demo.js                 # 把 miniprogram/logic 编译成浏览器包（preview/demo-bundle.js）
+│   ├── record-demo.js                # CDP 真实鼠标事件跑一遍补签，产出连续帧 + session-log
+│   ├── compose-ac2-video.py          # 帧序列 → 带字幕 mp4 / gif / 拼图
 │   └── shoot.sh                      # headless Chrome 截图
 ├── reports/jest.txt                  # npm run test:report 的完整输出
 ├── docs/ACCEPTANCE.md                # 需求 -> 实现 -> 证据 对照
@@ -108,6 +116,20 @@ bash scripts/shoot.sh preview/unchecked.html screenshots/unchecked.png 390 1580
 ```
 
 `gen-preview.js` 直接编译并读取 `miniprogram/mock/checkin-list.ts`，因此截图数据与代码中的 mock 数据始终一致。截图使用 headless Chrome，`--force-device-scale-factor=2`，输出 780×3160 PNG。
+
+### 5. 手动补签交互演示（AC-2 证据）
+
+`preview/interactive.html` 用浏览器直接打开即可手动点一遍：点未签到行的「手动补签」→ 选原因 → 确认，该行变「手动 · 已签到」、顶部已到 +1，页面顶部证据条里的 `load ID` 不变、`整页重载` 保持 0 次（说明是页面内局部更新，没有整页刷新）。
+
+要把这段录成证据（视频 / 连续帧 / 机读日志）：
+
+```bash
+node scripts/build-demo.js        # miniprogram/logic/*.ts → preview/demo-bundle.js
+node scripts/record-demo.js       # CDP 真实鼠标事件跑一遍 → demo/evidence/ac2/
+python3 scripts/compose-ac2-video.py   # → demo/ac2-manual-checkin.mp4 / .gif / 拼图
+```
+
+演示页渲染的是 `miniprogram/logic/*.ts` 的同一份代码（不是另写一份假页面），交互事件由 CDP `Input.dispatchMouseEvent` 真实派发。证据说明与逐帧对照见 `docs/AC-2_EVIDENCE.md`。
 
 ## mock 接口对接点
 

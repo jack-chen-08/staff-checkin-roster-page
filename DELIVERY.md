@@ -11,6 +11,8 @@
 | 单元测试 | `tests/{debounce,refresh,checkin,api,controller}.test.ts`（36 个用例） |
 | 截图 | `screenshots/all.png`、`screenshots/checked.png`、`screenshots/unchecked.png` |
 | 截图 harness | `preview/*.html`、`preview/*.css`、`scripts/gen-preview.js`、`scripts/shoot.sh` |
+| 交互演示（AC-2 证据） | `preview/interactive.html`、`preview/demo-app.js`、`preview/demo-bundle.js`、`scripts/build-demo.js`、`scripts/record-demo.js` |
+| 演示视频 / 连续帧 | `demo/ac2-manual-checkin.mp4`、`demo/ac2-manual-checkin.gif`、`demo/evidence/ac2/`（7 帧 + `session-log.json` + 拼图） |
 | 测试报告 | `reports/jest.txt` |
 | 文档 | `README.md`、`DELIVERY.md`、`docs/ACCEPTANCE.md` |
 
@@ -31,7 +33,8 @@
   - `tests/controller.test.ts` →「手动补签成功：该行状态与顶部计数同时更新，且不整页刷新」：断言 `list` 调用次数补签前后均为 1；该行 `checkedIn=true`、`methodText='手动'`、`checkinAt` 为 `HH:mm`；`stats.arrived = before + 1`；弹窗关闭且 `toast='补签成功'`。
   - `tests/controller.test.ts` →「补签后停留在「未签到」筛选时该行立即移出列表，计数仍同步」。
   - `tests/checkin.test.ts` →「行状态迁移：未签到 -> 已签到，重复迁移不再记变更」。
-- **结论**：通过（无录屏工具，以单元测试的完整状态迁移断言替代）。
+- **证据（页面级，返工补充）**：录屏 `demo/ac2-manual-checkin.mp4`（13 秒，7 个关键时刻带字幕）；同一次会话连续帧 `demo/evidence/ac2/frame-01..07.png`；机读日志 `demo/evidence/ac2/session-log.json`（`before.stats.arrived=25` → `after.stats.arrived=26`、`list=1`、`makeup=1`、`loads=1`、`loadId` 前后一致）。一次真实鼠标操作内，该行变「手动 · 已签到」与顶部已到 25→26 同屏出现，`load ID` 不变、整页重载 0 次。复现：`node scripts/build-demo.js && node scripts/record-demo.js && python3 scripts/compose-ac2-video.py`。说明见 `docs/AC-2_EVIDENCE.md`。
+- **结论**：通过。
 
 ### 3. 选「其他」原因但未填说明时不能确认
 

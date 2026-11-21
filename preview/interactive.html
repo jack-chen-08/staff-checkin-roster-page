@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390, initial-scale=1">
+<title>员工签到名单 · 手动补签交互演示</title>
+<link rel="stylesheet" href="preview.css">
+<link rel="stylesheet" href="checkin.css">
+<style>
+  /* 顶部证据条：用于证明「补签过程中整页没有重载」 */
+  .evidence{position:sticky;top:0;z-index:60;display:flex;flex-wrap:wrap;gap:0 10px;
+    align-items:center;padding:6px 12px;background:#0f172a;color:#e2e8f0;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;line-height:15px}
+  .evidence b{color:#7ee2b8;font-weight:600}
+  .evidence .ev-tag{margin-right:2px;padding:1px 5px;border-radius:3px;background:#1e293b;color:#94a3b8}
+  .evidence .ev-hit{color:#ffd666}
+
+  /* 数字 / 行变化时的高亮，便于在录屏中一眼定位 */
+  @keyframes numPop{0%{transform:scale(1)}35%{transform:scale(1.45);color:#2ba471}100%{transform:scale(1)}}
+  @keyframes rowFlash{0%{background:#e3f9e9}100%{background:transparent}}
+  @keyframes tagIn{0%{opacity:0;transform:translateX(-4px)}100%{opacity:1;transform:none}}
+  .kpi-num.pop{animation:numPop 900ms ease-out}
+  .row.flash{animation:rowFlash 1600ms ease-out}
+  .row .tag.new{animation:tagIn 400ms ease-out}
+
+  /* 补签弹窗（对应 components/makeup-dialog，TDesign 视觉近似） */
+  .mask{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.55);
+    display:flex;align-items:center;justify-content:center;padding:0 24px}
+  .mask[hidden]{display:none}
+  .dlgbox{width:100%;background:#fff;border-radius:12px;overflow:hidden}
+  .dlg-title{padding:18px 16px 4px;font-size:16px;font-weight:600;text-align:center}
+  .dlg-body{padding:12px 16px 4px;max-height:60vh;overflow:auto}
+  .dlg__member{display:flex;align-items:center;padding:8px 10px;background:#f6f7f9;border-radius:8px}
+  .dlg__avatar{width:34px;height:34px;border-radius:50%;background:var(--brand-light);color:var(--brand);
+    display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex:0 0 34px}
+  .dlg__info{margin-left:9px;min-width:0}
+  .dlg__name{font-size:14px;font-weight:600}
+  .dlg__meta{margin-top:2px;font-size:11px;color:var(--text-3)}
+  .dlg__label{display:flex;align-items:center;margin:14px 0 6px;font-size:13px;color:var(--text-2)}
+  .dlg__required{margin-left:6px;font-size:10px;color:var(--error);background:#fdecee;border-radius:3px;padding:1px 4px}
+  .radio{display:flex;align-items:center;padding:9px 0;font-size:14px}
+  .radio .dot{width:18px;height:18px;border-radius:50%;border:1px solid #ccc;margin-right:9px;
+    display:flex;align-items:center;justify-content:center;flex:0 0 18px}
+  .radio.on .dot{border-color:var(--brand)}
+  .radio.on .dot::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--brand)}
+  .dlg textarea{width:100%;min-height:64px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;
+    font-family:inherit;font-size:13px;outline:none;resize:none}
+  .dlg__hint{margin-top:6px;font-size:11px;color:var(--warning)}
+  .dlg__error{margin-top:8px;font-size:12px;color:var(--error)}
+  .dlg__tip{margin:12px 0 4px;font-size:11px;color:var(--text-3);line-height:16px}
+  .dlg-actions{display:flex;border-top:1px solid var(--line)}
+  .dlg-actions button{flex:1;height:48px;border:none;background:#fff;font-size:15px;font-family:inherit}
+  .dlg-actions button.cancel{color:var(--text-2);border-right:1px solid var(--line)}
+  .dlg-actions button.confirm{color:var(--brand);font-weight:600}
+  .dlg-actions button[disabled]{opacity:.5}
+
+  .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:99;
+    max-width:260px;padding:10px 16px;border-radius:8px;background:rgba(0,0,0,.8);color:#fff;
+    font-size:13px;text-align:center}
+  .toast[hidden]{display:none}
+
+  /* 录屏用的“点击指示”，让观者看到是真实点击 */
+  .cursor{position:fixed;z-index:100;width:26px;height:26px;pointer-events:none;
+    transition:transform 420ms cubic-bezier(.3,.7,.4,1);opacity:0;filter:drop-shadow(0 1px 3px rgba(0,0,0,.4))}
+  .cursor.show{opacity:1}
+  .click-ring{position:fixed;z-index:101;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;
+    border:2px solid #0052d9;pointer-events:none;opacity:0}
+  @keyframes ringOut{0%{opacity:.9;transform:scale(.35)}100%{opacity:0;transform:scale(1.15)}}
+  .click-ring.go{animation:ringOut 520ms ease-out}
+</style>
+</head>
+<body>
+
+<div class="statusbar"><span>9:41</span><span class="sig">●●● ▮▮</span></div>
+<div class="navbar"><span class="back">‹</span>员工签到名单<span class="capsule">···　⊙</span></div>
+
+<div class="evidence" id="evidence">
+  <span class="ev-tag">AC-2 证据</span>
+  <span>load ID <b id="loadId">—</b></span>
+  <span>整页重载 <b id="reloadCount">0</b> 次</span>
+  <span>list 接口 <b id="listCalls">0</b> 次</span>
+  <span>makeup 接口 <b id="makeupCalls">0</b> 次</span>
+  <span>已运行 <b id="uptime">0.0</b>s</span>
+</div>
+
+<div class="page">
+  <div class="hero">
+    <div class="hero-top">
+      <div>
+        <div class="hero-title" id="eventTitle">2026 秋季合作伙伴大会</div>
+        <div class="hero-sub">2026-11-21 · 员工签到台</div>
+      </div>
+      <div class="live"><i></i>30 秒自动刷新</div>
+    </div>
+    <div class="hero-body">
+      <div class="ring">
+        <svg width="139" height="139" viewBox="0 0 139 139">
+          <circle cx="69.5" cy="69.5" r="54" fill="none" stroke="#e7e7e7" stroke-width="9"/>
+          <circle id="ringArc" cx="69.5" cy="69.5" r="54" fill="none" stroke="#0052d9" stroke-width="9"
+            stroke-linecap="round" stroke-dasharray="0 339.29" transform="rotate(-90 69.5 69.5)"/>
+        </svg>
+        <div class="ring-center">
+          <div class="ring-num" id="ringRate">0<small>%</small></div>
+          <div class="ring-cap">签到率</div>
+        </div>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-num" id="kpiExpected">0</div><div class="kpi-label">应到</div></div>
+        <div class="kpi-split"></div>
+        <div class="kpi"><div class="kpi-num ok" id="kpiArrived">0</div><div class="kpi-label">已到</div></div>
+        <div class="kpi-split"></div>
+        <div class="kpi"><div class="kpi-num grey" id="kpiAbsent">0</div><div class="kpi-label">未到</div></div>
+      </div>
+    </div>
+    <div class="hero-foot"><span id="lastUpdated">最近更新 —</span><span id="totalCount">名单共 — 人</span></div>
+  </div>
+
+  <div class="filters">
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-tab="all">全部</div>
+      <div class="tab" data-tab="checked">已签到</div>
+      <div class="tab" data-tab="unchecked">未签到</div>
+    </div>
+    <div class="search">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2">
+        <circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21" stroke-linecap="round"/>
+      </svg>
+      <input id="searchInput" value="" placeholder="搜索姓名 / 企业 / 票号后 4 位">
+    </div>
+  </div>
+
+  <div class="list" id="list"></div>
+</div>
+
+<div class="mask" id="mask" hidden>
+  <div class="dlgbox dlg" id="dlg">
+    <div class="dlg-title">手动补签</div>
+    <div class="dlg-body">
+      <div class="dlg__member" id="dlgMember"></div>
+      <div class="dlg__label"><span>补签原因</span><span class="dlg__required">必选</span></div>
+      <div id="reasonList"></div>
+      <div id="noteField" hidden>
+        <div class="dlg__label"><span>补签说明</span><span class="dlg__required">必填</span></div>
+        <textarea id="noteInput" maxlength="100" placeholder="请说明无法扫码签到的原因，例如：闸机临时断电"></textarea>
+      </div>
+      <div class="dlg__hint" id="dlgHint" hidden>选择「其他」时需填写说明后才能确认补签</div>
+      <div class="dlg__error" id="dlgError" hidden></div>
+      <div class="dlg__tip">补签后该会员状态立即变为「已签到」，请先核对本人票号。</div>
+    </div>
+    <div class="dlg-actions">
+      <button class="cancel" id="btnCancel">取消</button>
+      <button class="confirm" id="btnConfirm">确认补签</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<svg class="cursor" id="cursor" viewBox="0 0 24 24"><path d="M4 2l15 9-6.5 1.2L9.5 19z" fill="#fff" stroke="#111" stroke-width="1.4" stroke-linejoin="round"/></svg>
+<div class="click-ring" id="clickRing"></div>
+
+<script src="demo-bundle.js"></script>
+<script src="demo-app.js"></script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 node_modules/
 .preview-build/
+.demo-build/
 .venv/
 *.log
 .DS_Store
